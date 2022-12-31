@@ -3,10 +3,14 @@ from manim import *
 # from manim_voiceover.services.gtts import GTTSService
 
 
-class SolvingEquations(Scene):
+class EquationIntro(Scene):
 
-    def whatIsEquation(self):
-        labels = [Tex(l).shift(UP*2) for l in ["","Variables", "Equal sign", "Numbers", "Operators"]]
+    def construct(self):
+        NUM_COLOR = BLUE
+        VAR_COLOR = ORANGE
+        OP_COLOR = GREEN
+
+        labels = [Tex(l).shift(UP*2) for l in ["","Equal sign", "Variables", "Numbers", "Operators"]]
 
         def switch_labels(i: int):
             return AnimationGroup(
@@ -21,6 +25,18 @@ class SolvingEquations(Scene):
                 )
 
         e = MathTex("4", "\\times", "(x-3)", "=", "5", "-", "(x+3)", "+", r'\frac{y}{4}', substrings_to_isolate=["(", ")", "-", "+", "3", "4", "5"])
+        e.set_color_by_tex_to_color_map({
+                "3": NUM_COLOR,
+                "4": NUM_COLOR,
+                "5":NUM_COLOR,
+                "x": VAR_COLOR,
+                "y": VAR_COLOR,
+                "-": OP_COLOR,
+                "=": OP_COLOR,
+                "(": OP_COLOR,
+                ")": OP_COLOR,
+                "+": OP_COLOR
+            })
         # below doesn't work :(
         # e = MathTex("5 \\cdot (x-3) = 4 - \\frac{y}{4} + 3", substrings_to_isolate=["(", ")", "-", "+", "3", "4", "5", '\{y\}'])
         self.play(Write(e))
@@ -29,7 +45,7 @@ class SolvingEquations(Scene):
         # Equal
         self.play(
             AnimationGroup(
-                switch_labels(1),
+                switch_labels(0),
                 IndicateAnimGroup("="),
                 lag_ratio=0.8
             ),
@@ -40,7 +56,7 @@ class SolvingEquations(Scene):
         # Variables
         self.play(
             AnimationGroup(
-                switch_labels(0),
+                switch_labels(1),
                 IndicateAnimGroup("x", "y"),
                 lag_ratio=0.8
             ),
@@ -71,13 +87,13 @@ class SolvingEquations(Scene):
         self.wait()
 
 
-    def firstSentence(self):
+class FirstEquation(Scene):
+    def construct(self):
         NUM_COLOR = BLUE
         VAR_COLOR = ORANGE
         OP_COLOR = GREEN
 
-
-            
+       
         
         sentence = Tex("Exactly seven years ago, Sam was 5 times the age of Janet", 
                         font_size=40, 
@@ -109,8 +125,8 @@ class SolvingEquations(Scene):
 
         # Equation simplification
         lines = VGroup(
-            MathTex("S-7", "=", "5", " \\times", "(", "J-7", ")", substrings_to_isolate=["S","J"]),
-            MathTex("S-7", "=", "5", "J","-", "35", substrings_to_isolate=["S","J"]),
+            MathTex("S", "-", "7", "=", "5", " \\times", "(", "J", "-", "7", ")", substrings_to_isolate=["S","J"]),
+            MathTex("S", "-", "7", "=", "5", "J","-", "35", substrings_to_isolate=["S","J"]),
             MathTex("S", "=", "5", "J","-", "35", "+", "7", substrings_to_isolate=["S","J"]),
             MathTex("S", "=", "5", "J","-", "28", substrings_to_isolate=["S","J"]),
         )
@@ -134,7 +150,8 @@ class SolvingEquations(Scene):
                 "=": OP_COLOR,
                 "(": OP_COLOR,
                 ")": OP_COLOR,
-                "+": OP_COLOR
+                "+": OP_COLOR,
+                "\\times": OP_COLOR
             })
 
         play_kw = {"run_time": 2}
@@ -142,9 +159,14 @@ class SolvingEquations(Scene):
         self.play(TransformMatchingShapes(extractedTexes, lines[0]), path_arc=90*DEGREES, **play_kw)
         self.wait(2)
 
-        for i in range(1,4):
-            self.play(TransformMatchingTex(lines[i-1].copy(), lines[i]), path_arc=180*DEGREES, **play_kw)
+        for i in range(1,3):
+            self.play(TransformMatchingTex(lines[i-1].copy(), lines[i], key_map={"-7": "+7"}), 
+                path_arc=180*DEGREES, **play_kw)
             self.wait(2)
+
+        self.play(TransformMatchingTex(lines[2].copy(), lines[3], key_map={"-7": "+7"}, transform_mismatches=True), 
+            path_arc=180*DEGREES, **play_kw)
+        self.wait(2)
 
         sr = SurroundingRectangle(lines[-1], buff=MED_SMALL_BUFF)
         br = Brace(sr, DOWN, buff=MED_SMALL_BUFF)
@@ -157,12 +179,6 @@ class SolvingEquations(Scene):
             lag_ratio=0.8
             ))
             
-
-
-    def construct(self):
-        # self.whatIsEquation()
-        self.firstSentence()
-
         self.wait(2)
       
 
