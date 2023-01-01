@@ -93,6 +93,20 @@ class FirstEquation(Scene):
         VAR_COLOR = ORANGE
         OP_COLOR = GREEN
 
+        COLOR_MAP = {
+                "5": NUM_COLOR,
+                "7": NUM_COLOR,
+                "35":NUM_COLOR,
+                "28": NUM_COLOR,
+                "-": OP_COLOR,
+                "=": OP_COLOR,
+                "(": OP_COLOR,
+                ")": OP_COLOR,
+                "+": OP_COLOR,
+                "\\times": OP_COLOR,
+                "S": VAR_COLOR,
+                "J": VAR_COLOR,
+            }
        
         
         sentence = Tex("Exactly seven years ago, Sam was 5 times the age of Janet", 
@@ -125,47 +139,63 @@ class FirstEquation(Scene):
 
         # Equation simplification
         lines = VGroup(
-            MathTex("S", "-", "7", "=", "5", " \\times", "(", "J", "-", "7", ")", substrings_to_isolate=["S","J"]),
-            MathTex("S", "-", "7", "=", "5", "J","-", "35", substrings_to_isolate=["S","J"]),
-            MathTex("S", "=", "5", "J","-", "35", "+", "7", substrings_to_isolate=["S","J"]),
-            MathTex("S", "=", "5", "J","-", "28", substrings_to_isolate=["S","J"]),
-        )
+            MathTex("S-7", "=", "5 \\times", "(J-7)"), 
+            MathTex("S-7", "=", "5J-35"),
+            MathTex("S-7", "+", "7", "=", "5J-35", "+", "7"),
+            MathTex("S", "=", "5", "J","-", "35", "+", "7"),
+            MathTex("S", "=", "5", "J","-", "28"),
+        )        
 
 
         lines.arrange(DOWN, buff=MED_LARGE_BUFF)
         for i, line in enumerate(lines):
-            # align equations on equal to sign
+            # align equations so that all the equal signs line up
             if i > 0:
                 shift_x = line.get_part_by_tex("=").get_x() - lines[i-1].get_part_by_tex("=").get_x()
                 line.shift(np.array((-shift_x, 0, 0)))
 
-            line.set_color_by_tex_to_color_map({
-                "5": NUM_COLOR,
-                "7": NUM_COLOR,
-                "35":NUM_COLOR,
-                "28": NUM_COLOR,
-                "S": VAR_COLOR,
-                "J": VAR_COLOR,
-                "-": OP_COLOR,
-                "=": OP_COLOR,
-                "(": OP_COLOR,
-                ")": OP_COLOR,
-                "+": OP_COLOR,
-                "\\times": OP_COLOR
-            })
+            line.set_color_by_tex_to_color_map(COLOR_MAP)
 
         play_kw = {"run_time": 2}
 
         self.play(TransformMatchingShapes(extractedTexes, lines[0]), path_arc=90*DEGREES, **play_kw)
+        
+        br_sam = Brace(lines[0][0], UP, buff=SMALL_BUFF, color=YELLOW_A)
+        br_sam_text = Text("Sam, 7 yrs ago", font_size=18, color=YELLOW_A).next_to(br_sam, UP)
+        br_janet = Brace(lines[0][3], UP, buff=SMALL_BUFF, color=YELLOW_A)
+        br_janet_text = Text("Janet, 7 yrs ago", font_size=18, color=YELLOW_A).next_to(br_janet, UP)
+
+        self.play (AnimationGroup(
+            Create(VGroup(br_sam, br_sam_text)),
+            Create(VGroup(br_janet, br_janet_text)),
+            lag_ratio=0.2
+            ))
+
         self.wait(2)
 
-        for i in range(1,3):
-            self.play(TransformMatchingTex(lines[i-1].copy(), lines[i], key_map={"-7": "+7"}), 
-                path_arc=180*DEGREES, **play_kw)
-            self.wait(2)
+        self.play(TransformMatchingTex(lines[0].copy(), lines[1], key_map={"5 \\times (J-7)": "5J-35"}), 
+            path_arc=90*DEGREES, **play_kw)
+        self.wait(2)
 
-        self.play(TransformMatchingTex(lines[2].copy(), lines[3], key_map={"-7": "+7"}, transform_mismatches=True), 
-            path_arc=180*DEGREES, **play_kw)
+        # line1_new = MathTex("S", "-", "7", "=", "5", "J","-", "35")
+        # line1_new.replace(lines[1])
+        # line1_new.match_style(lines[1])
+        self.play(TransformMatchingTex(lines[1].copy(), lines[2]), 
+            path_arc=90*DEGREES, **play_kw)
+        self.wait(2)
+
+        # Create a new MathTex with same equation, but with different isolated subMobs to 
+        # better animate next line
+        line2_new = MathTex("S-7+7", "=", "5", "J","-", "35", "+", "7")
+        line2_new.replace(lines[2])
+        line2_new.match_style(lines[2])
+        line2_new.set_color_by_tex_to_color_map(COLOR_MAP)
+        self.play(TransformMatchingTex(line2_new, lines[3], key_map={"S-7+7": "S"}),  #, key_map={"S-7+7": "S"}
+            path_arc=90*DEGREES, **play_kw)
+        self.wait(2)
+
+        self.play(TransformMatchingTex(lines[3].copy(), lines[4], transform_mismatches=True), 
+            path_arc=90*DEGREES, **play_kw)
         self.wait(2)
 
         sr = SurroundingRectangle(lines[-1], buff=MED_SMALL_BUFF)
@@ -173,7 +203,7 @@ class FirstEquation(Scene):
         br_text = Text("Equation 1").next_to(br, DOWN)
 
         self.play (AnimationGroup(
-            Flash(lines[-1], flash_radius=1.8, num_lines=20),
+            Flash(lines[-1], flash_radius=1.5, num_lines=20),
             Create(sr),
             Create(VGroup(br, br_text)),
             lag_ratio=0.8
