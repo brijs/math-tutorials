@@ -347,7 +347,13 @@ class SecondEquation(Scene):
       
 
   
-
+# Tips to create custom Mobject classes
+# - Inherit from Mobject or VMobject
+#  - call super().__init__() in constructor
+#  - call self.add(list_of_custom_composed_mobjects) 
+# - Define custom methods for behaviors
+#  - return Animation | AnimationGroup when you want that behavior to be animated 
+#  - in the caller code, this can be passed into self.play()
 
 class ProgressList(VMobject):
     COLOR_DONE = GREEN_D
