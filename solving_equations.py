@@ -1,6 +1,7 @@
 from manim import *
 
 from utils.progress_list import ProgressList
+from utils.logo import Logo
 # from manim_voiceover import VoiceoverScene
 # from manim_voiceover.services.gtts import GTTSService
 
@@ -530,37 +531,141 @@ class Outline(Scene):
         self.play(l.set_current_item(1), run_time=2)
         self.wait(2)
 
+        self.play(l.set_current_item(3), run_time=2)
+        self.wait(2)
+
         self.play(l.set_all_done(), run_time=2)
         self.wait(2)
 
 
-class Logo(Scene):
+class LogoAnimation(Scene):
 
     def construct(self):
-        FONT = 'Hack'
 
-        c = Circle(radius=2, color='#43798A', fill_opacity=0.6)
-        k = Text("K", font_size=220, color=TEAL_D, stroke_width=2, weight=BOLD,  font=FONT, fill_opacity=1).shift(LEFT*0.3) #, gradient=(TEAL_E, GREEN)
-        b = Text("B", font_size=170, color='#8A3D52', stroke_width=2, font=FONT).shift(RIGHT*0.35+DOWN * 0.60)
-
-        arc1 = c.get_left()
-        arc2 = c.get_center() + DOWN * 0.3 + LEFT * 0.1
-        arc3 = c.get_right()
-
-        ap = ArcPolygon(arc1, arc3, color='#D6D189', fill_opacity=0.8,
-                arc_config=[
-                    {'radius':2.8, 'angle':90*DEGREES},
-                    {'radius':2, 'angle':180*DEGREES},
-                ]).rotate(39*DEGREES, about_point=c.get_center())
-
-        # ap = CubicBezier(arc1, arc2+UP*1.5, arc2+DOWN*1.5, arc3)
-        v = VGroup(c, ap, b, k)
-        # self.add(v)
-
-        self.play(AnimationGroup(
-            AnimationGroup(Create(c),Create(ap)),
-            Write(k),
-            Write(b),
-            lag_ratio=0.8
-        ), run_time=3)
+        logo = Logo()
+        self.play(Write(logo), run_time=3)
         self.wait()
+
+        self.play(logo.animate.scale(0.15).to_corner(DR), run_time=2)
+
+
+class Main(Scene):
+    def saveOutlineListState(self, ol):
+        # This copy is necessary, because we want to FadeIn/Out this Object 
+        # multiple times in the scene and, these animations also add/remove 
+        # # objects form scene (ie not just hide & show)
+        self.ol_v = ol.copy()
+
+    def getSavedOutlineList(self):
+        return self.ol_v
+
+    def construct(self):
+        #1 Logo
+        self.logo = Logo()
+        self.play(Write(self.logo), run_time=3)
+        self.wait()
+
+        #2 Title
+        self.title = Title("Solving Equations")
+        self.play(LaggedStart(
+            self.logo.animate.scale(0.15).to_corner(DR),
+            Create(self.title), 
+            lag_ratio=0.6),
+            run_time=3)
+
+        #3 Outline
+        ol_verbose = ProgressList("Read sentences", "Translate sentences into Equations", "Simplify Equations", "Substitute", list_dir=DOWN).scale(1.2)
+        ol_verbose.next_to(self.title, DOWN).shift(DOWN)
+        ol_v = ProgressList("Read", "Translate", "Simplify", "Substitute", list_dir=DOWN)
+        ol_v.to_edge(LEFT).shift(UP)
+
+        self.saveOutlineListState(ol_v)
+        
+
+        self.play(Create(ol_verbose), run_time=4)
+        self.wait()
+        self.play(ReplacementTransform(ol_verbose, ol_v), run_time=2)
+        self.remove(ol_v)
+
+        #4 Display 4 Sections
+        self.section_sentence_parts()
+        self.section_equation1()
+
+        self.wait()
+
+
+    def section_sentence_parts(self):
+        ol_v = self.getSavedOutlineList()
+        self.add(ol_v)
+
+        # Fade out outline & title
+        self.play(ol_v.set_current_item(0), run_time=2)
+        self.saveOutlineListState(ol_v)
+
+        self.play(Indicate(ol_v.get_item(0)), run_time=2)
+        self.play(AnimationGroup(
+            FadeOut(ol_v, shift=LEFT),
+            FadeOut(self.title, shift=UP)
+            ))
+
+        s = ["Exactly seven years ago, Sam was 5 times the age of Janet.", 
+             " Exactly two years ago, Sam was 3 times the age of Janet.", 
+             " What is the sum of their ages today?"]
+
+        sentences = Tex(*s, color=BLUE).scale(0.7).to_edge(LEFT).shift(RIGHT+UP)
+        self.play(Write(sentences), run_time=3)
+        self.wait()
+
+        sentences_v = VGroup(*[Tex(s_i, color=BLUE).scale(0.7) for s_i in s])
+        sentences_v.arrange(DOWN, buff=LARGE_BUFF, aligned_edge=LEFT).to_edge(LEFT).shift(2*RIGHT+1*UP)
+        self.play(TransformMatchingShapes(sentences, sentences_v), run_time=3)
+        self.wait()
+
+        self.play(LaggedStart(*[Indicate(i) for i in sentences_v], lag_ratio=0.8), run_time=3)
+        self.wait()
+
+        self.play(FadeOut(sentences_v))
+        self.wait()
+
+
+    def section_equation1(self):
+        ol_v = self.getSavedOutlineList()
+    
+        # Fade in & out outline & title
+        self.play(FadeIn(ol_v, shift=RIGHT))
+        self.play(ol_v.set_current_item(1))
+        self.saveOutlineListState(ol_v)
+
+        self.play(Indicate(ol_v.get_item(1),run_time=2))
+        self.play(FadeOut(ol_v, shift=LEFT))
+
+
+
+
+class Test (Scene):
+    def construct(self):
+        s = Square()
+        c = Circle().next_to(s)
+        self.add(s,c)
+        self.wait()
+
+        self.play(s.animate.shift(LEFT).fade(0.8))
+        self.play(s.animate.shift(RIGHT).fade(1))
+
+        # self.play(c.animate.fade(1))
+        # self.play(c.animate.fade(0))
+
+
+        f = Variable(0.3, 'fade_val', num_decimal_places=2).next_to(c, UP)
+        self.add(f)
+        c.add_updater(lambda c: c.fade(f.tracker.get_value()))
+
+        self.play(f.tracker.animate.set_value(1), run_time=5, rate_func=linear)
+
+
+        self.wait()
+        self.play(Write(Text("Done")))
+        self.wait()
+
+
+        
