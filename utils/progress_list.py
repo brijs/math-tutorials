@@ -21,8 +21,8 @@ class ProgressList(VMobject):
     COLOR_PENDING = GRAY_D
 
     def __createItem(self, text, list_dir) -> VGroup:
-        d = Dot(fill_opacity=1.0, color=ProgressList.COLOR_CURR)
-        t = Text(text, font_size=20, color=ProgressList.COLOR_PENDING)
+        d = Dot(fill_opacity=1.0, color=ProgressList.COLOR_DONE)
+        t = Text(text, font_size=20, color=ProgressList.COLOR_DONE)
 
         if (list_dir==DOWN).all():
             t.next_to(d, RIGHT, buff=MED_SMALL_BUFF)
@@ -40,7 +40,7 @@ class ProgressList(VMobject):
 
         self.__items = []
         self.__lines = []
-        self.__curr_index = 0
+        self.__curr_index = len(text_strings) # All done status by default
 
         for i, t in enumerate(text_strings):
             # Create Item (dot & label)
@@ -50,11 +50,10 @@ class ProgressList(VMobject):
 
             # Draw line to connect Items
             if i > 0:
-                item.get_d().set_color(ProgressList.COLOR_PENDING)
                 last_item_dot = self.__items[-2].get_d()
                 last_item_text = self.__items[-2].get_t()
                 line_length =  list_dir if (list_dir==DOWN).all() else ( max (1.0, last_item_text.width) * list_dir * 1.3)
-                l = Line(start=last_item_dot.get_center(), end=last_item_dot.get_center()+line_length, buff=SMALL_BUFF, color=ProgressList.COLOR_PENDING)
+                l = Line(start=last_item_dot.get_center(), end=last_item_dot.get_center()+line_length, buff=SMALL_BUFF, color=ProgressList.COLOR_DONE)
                 item.shift(l.end - item.get_d().get_center())
 
                 self.__lines.append(l)
@@ -74,7 +73,9 @@ class ProgressList(VMobject):
             lag_ratio=0.4
         )
 
-        
+    def get_item(self, item_num):
+        return self.__items[item_num]
+
     def set_all_done(self) -> AnimationGroup:
         anims = []
 
@@ -105,6 +106,8 @@ class ProgressList(VMobject):
         else: # new_curr_index < self.__curr_index:
             start_index = new_curr_index
             end_index = self.__curr_index
+            if end_index == len(self.__items):
+                end_index = end_index-1
 
             anims.extend([self.__animate_item_reset(self.__items[i+1], self.__lines[i]) for i in reversed(range(start_index, end_index))])
             # update current item
