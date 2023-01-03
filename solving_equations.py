@@ -348,7 +348,165 @@ class SecondEquation(Scene):
         self.wait(2)
       
 
-  
+class SolvingTwoEquations(Scene):
+    def construct(self):
+        line1_str = """Exactly seven years ago, \\\\
+                        Sam was 5 times the age of Janet."""
+        line1_eqns = [
+            " \\to ",
+            " S-7 = 5 \\times (J-7) ",
+            " \\to ",
+            " S = 5J - 28 "
+        ]
+        line2_str = """Exactly two years ago, \\\\
+                         Sam was 3 times the age of Janet."""
+        line2_eqns = [
+            " \\to ",
+            " S-2 = 3 \\times (J-2) ",
+            " \\to ",
+            " S = 3J - 4 "
+        ]
+        line3_str = """What is the sum of their ages \\\\
+                        today?"""
+        line3_eqns = [
+            " \\to ",
+            " S + J = ?",
+        ]
+        v1 = self.gen_summary_line(line1_str, line1_eqns)
+        v2 = self.gen_summary_line(line2_str, line2_eqns)
+        v3 = self.gen_summary_line(line3_str, line3_eqns)
+
+        v1.shift(LEFT)
+        v2.align_to(v1, LEFT)
+        v3.align_to(v1, LEFT)
+
+        t1, t2, t3 = v1[1], v2[1], v3[1]
+        t1.shift(RIGHT)
+        t2.align_to(t1, LEFT)
+        t3.align_to(t1, LEFT)
+
+        self.animate_line(v1)
+        self.play(v1.animate.shift(UP*1))
+        self.animate_line(v2)
+        self.play(v1.animate.shift(UP*1.5), v2.animate.shift(UP*1.5))
+        self.animate_line(v3, False)
+
+
+        self.wait()
+        eqn1_copy = v1[1][-1].copy()
+        self.add(eqn1_copy)
+        self.play(FadeOut(v1, v2, v3))
+        self.wait()
+        #
+        # Equation 
+        lines = VGroup(
+            MathTex("S = 5J - 28"),
+            MathTex("S", "=", "5", "J","-", "28"),
+            MathTex("3J-4", "=", "5", "J","-", "28"),
+            MathTex("3J-4", "+", "4", "=", "5", "J","-", "28", "+", "4"),
+            MathTex("3J", "=", "5", "J","-", "28", "+", "4"),
+            MathTex("3J", "=", "5", "J","-", "24"),
+            MathTex("5", "J","-", "24", "=", "3J"),
+
+            MathTex("5", "J", "-", "3J" "=", "24"),
+            MathTex("2J" "=", "24"),
+            MathTex("J" "=", "12"),
+        )        
+
+
+        lines.arrange(DOWN, buff=MED_LARGE_BUFF).scale(0.8)
+        for i, line in enumerate(lines):
+            # align equations so that all the equal signs line up
+            if i > 0:
+                shift_x = line.get_part_by_tex("=").get_x() - lines[i-1].get_part_by_tex("=").get_x()
+                line.shift(np.array((-shift_x, 0, 0)))
+
+            # line.set_color_by_tex_to_color_map(COLOR_MAP)
+
+        play_kw = {"run_time": 2}
+
+        self.play(TransformMatchingShapes(eqn1_copy, lines[0]), path_arc=90*DEGREES, **play_kw)
+        # line2_new = MathTex("S-7+7", "=", "5", "J","-", "35", "+", "7")
+        # line2_new.replace(lines[2])
+        # line2_new.match_style(lines[2])
+
+        for i, t in enumerate(lines):
+            if i < len(lines)-1:
+                self.play(TransformMatchingTex(lines[i].copy(), lines[i+1]), 
+                    path_arc=90*DEGREES, **play_kw)
+                self.wait(2)
+
+        # Create a new MathTex with same equation, but with different isolated subMobs to 
+        # better animate next line
+        # line2_new = MathTex("S-7+7", "=", "5", "J","-", "35", "+", "7")
+        # line2_new.replace(lines[2])
+        # line2_new.match_style(lines[2])
+        # line2_new.set_color_by_tex_to_color_map(COLOR_MAP)
+        # self.play(TransformMatchingTex(line2_new, lines[3], key_map={"S-7+7": "S"}),  #, key_map={"S-7+7": "S"}
+        #     path_arc=90*DEGREES, **play_kw)
+        # self.wait(2)
+
+        # self.play(TransformMatchingTex(lines[3].copy(), lines[4], transform_mismatches=True), 
+        #     path_arc=90*DEGREES, **play_kw)
+        # self.wait(2)
+
+
+
+    def gen_summary_line(self, str, eqns):
+        NUM_COLOR = BLUE
+        VAR_COLOR = ORANGE
+        OP_COLOR = GREEN
+
+        s = Tex(str)
+        t = MathTex(*eqns) # substrings_to_isolate=["S", "J", "+", "-", "(", ")", "="])
+        t.arrange(RIGHT, buff=MED_LARGE_BUFF)
+        t.set_color_by_tex_to_color_map({
+                "3": NUM_COLOR,
+                "4": NUM_COLOR,
+                "5":NUM_COLOR,
+                "x": VAR_COLOR,
+                "y": VAR_COLOR,
+                "-": OP_COLOR,
+                "=": OP_COLOR,
+                "(": OP_COLOR,
+                ")": OP_COLOR,
+                "+": OP_COLOR
+            })
+        v = VGroup(s, t).arrange(RIGHT).scale(0.6)
+        return v
+
+    def animate_line(self, v, show_rect=True):
+        s,t = v
+        self.play(Write(s))
+        self.wait()
+        self.play(Write(t[0]))
+        self.wait()
+        self.play(Write(t[1]))
+        self.wait()
+        if show_rect:
+            self.play(Write(t[2]))
+            self.wait()
+            self.play(Write(t[3]))
+            r = SurroundingRectangle(t[3], buff=MED_SMALL_BUFF)
+            v.add(r)
+            self.play(Create(r))
+            self.wait()
+
+        # self.play(LaggedStart(
+        #     Write(s),
+        #     *[Write(i) for i in t],
+        #     lag_ratio=1
+        # ), run_time=8)
+            # "Exactly seven years ago, \\newline Sam was 5 times the age of Janet.",
+            # "$ \\to $",
+            # "S-7 = 5 \\times (J-7)",
+            # " \\to "
+            # "S = 5J - 28"
+
+        #      Exactly two years ago, Sam was 3 times the age of Janet. \\\\
+        #      What is the sum of their ages today?"
+        # )
+
 
 class Outline(Scene):
 
@@ -374,3 +532,35 @@ class Outline(Scene):
 
         self.play(l.set_all_done(), run_time=2)
         self.wait(2)
+
+
+class Logo(Scene):
+
+    def construct(self):
+        FONT = 'Hack'
+
+        c = Circle(radius=2, color='#43798A', fill_opacity=0.6)
+        k = Text("K", font_size=220, color=TEAL_D, stroke_width=2, weight=BOLD,  font=FONT, fill_opacity=1).shift(LEFT*0.3) #, gradient=(TEAL_E, GREEN)
+        b = Text("B", font_size=170, color='#8A3D52', stroke_width=2, font=FONT).shift(RIGHT*0.35+DOWN * 0.60)
+
+        arc1 = c.get_left()
+        arc2 = c.get_center() + DOWN * 0.3 + LEFT * 0.1
+        arc3 = c.get_right()
+
+        ap = ArcPolygon(arc1, arc3, color='#D6D189', fill_opacity=0.8,
+                arc_config=[
+                    {'radius':2.8, 'angle':90*DEGREES},
+                    {'radius':2, 'angle':180*DEGREES},
+                ]).rotate(39*DEGREES, about_point=c.get_center())
+
+        # ap = CubicBezier(arc1, arc2+UP*1.5, arc2+DOWN*1.5, arc3)
+        v = VGroup(c, ap, b, k)
+        # self.add(v)
+
+        self.play(AnimationGroup(
+            AnimationGroup(Create(c),Create(ap)),
+            Write(k),
+            Write(b),
+            lag_ratio=0.8
+        ), run_time=3)
+        self.wait()
