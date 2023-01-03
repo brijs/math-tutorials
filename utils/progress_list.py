@@ -1,6 +1,8 @@
 from manim import *
 
 
+# See: https://slama.dev/manim/objects-animations-and-plugins/
+
 # General Tips to create custom Mobject classes
 # - Inherit from Mobject or VMobject
 #  - call super().__init__() in constructor
