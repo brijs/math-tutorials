@@ -20,9 +20,15 @@ class ProgressList(VMobject):
     COLOR_CURR = ORANGE
     COLOR_PENDING = GRAY_D
 
-    def __createItem(self, text, list_dir) -> VGroup:
-        d = Dot(fill_opacity=1.0, color=ProgressList.COLOR_DONE)
-        t = Text(text, font_size=20, color=ProgressList.COLOR_DONE)
+    def __createItem(self, text, idx, list_dir) -> VGroup:
+        color = ProgressList.COLOR_DONE
+        if idx == self.__curr_index:
+            color = ProgressList.COLOR_CURR
+        elif idx > self.__curr_index:
+            color = ProgressList.COLOR_PENDING
+
+        d = Dot(fill_opacity=1.0, color=color)
+        t = Text(text, font_size=20, color=color)
 
         if (list_dir==DOWN).all():
             t.next_to(d, RIGHT, buff=MED_SMALL_BUFF)
@@ -34,17 +40,19 @@ class ProgressList(VMobject):
         item.add(d,t)
         return item
 
-    def __init__(self, *text_strings, list_dir=DOWN, **kwargs) -> None:
+    def __init__(self, *text_strings, list_dir=DOWN, current_item_num=1000, **kwargs) -> None:
         # initialize the vmobject
         super().__init__(**kwargs)
 
         self.__items = []
         self.__lines = []
-        self.__curr_index = len(text_strings) # All done status by default
+        self.__curr_index = current_item_num
+        if current_item_num > len(text_strings):
+            self.__curr_index = len(text_strings) # All done status by default
 
         for i, t in enumerate(text_strings):
             # Create Item (dot & label)
-            item = self.__createItem(t, list_dir)
+            item = self.__createItem(t, i, list_dir)
             self.__items.append(item)
             self.add(item) # add to submobjects - IMP
 
@@ -52,8 +60,14 @@ class ProgressList(VMobject):
             if i > 0:
                 last_item_dot = self.__items[-2].get_d()
                 last_item_text = self.__items[-2].get_t()
+
+                color = ProgressList.COLOR_DONE
+                if i > self.__curr_index:
+                    color = ProgressList.COLOR_PENDING
+
                 line_length =  list_dir if (list_dir==DOWN).all() else ( max (1.0, last_item_text.width) * list_dir * 1.3)
-                l = Line(start=last_item_dot.get_center(), end=last_item_dot.get_center()+line_length, buff=SMALL_BUFF, color=ProgressList.COLOR_DONE)
+                l = Line(start=last_item_dot.get_center(), end=last_item_dot.get_center()+line_length, 
+                        buff=SMALL_BUFF, color=color)
                 item.shift(l.end - item.get_d().get_center())
 
                 self.__lines.append(l)
